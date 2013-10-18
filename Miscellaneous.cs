@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Gdk;
 
 namespace SomeImageSlideshow {
@@ -50,13 +52,49 @@ namespace SomeImageSlideshow {
 			}
 		}
 		private int SizeCap(int i) {
-			if (i >= this.Length) {
-				return this.Length - 1;
-			} else if (i < 0) {
-				return 0;
-			} else {
-				return i;
+			return Math.Max (Math.Min (i, this.Length - 1), 0);
+		}
+	}
+
+	public class Loadout {
+		public enum AssetType {File, Directory, Subdirectories}
+		Dictionary<AssetType, List<string>> loadoutDict = new Dictionary<AssetType, List<string>> ();
+		public Loadout(string ldpath) {
+			loadoutDict.Add (AssetType.File, new List<string> ());
+			loadoutDict.Add (AssetType.Directory, new List<string> ());
+			loadoutDict.Add (AssetType.Subdirectories, new List<string> ());
+			foreach(string line in File.ReadAllLines(ldpath)) {
+				char AT = line [0];
+				string path = line.Substring (2);
+				switch(AT) {
+				case 'F':
+					loadoutDict [AssetType.File].Add (path);
+					break;
+				case 'D':
+					loadoutDict [AssetType.Directory].Add (path);
+					break;
+				case 'S':
+					loadoutDict [AssetType.Subdirectories].Add (path);
+					break;
+				}
 			}
+		}
+		public string[] GetFiles () {
+			List<string> imgpaths = new List<string> ();
+			foreach(string file in loadoutDict[AssetType.File]) {
+				imgpaths.Add (file);
+			}
+			foreach(string directory in loadoutDict[AssetType.Directory]) {
+				foreach(string file in Directory.GetFiles(directory)) {
+					imgpaths.Add (file);
+				}
+			}
+			foreach(string directory in loadoutDict[AssetType.Subdirectories]) {
+				foreach(string file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories)) {
+					imgpaths.Add (file);
+				}
+			}
+			return imgpaths.ToArray ();
 		}
 	}
 

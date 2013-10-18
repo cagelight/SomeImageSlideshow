@@ -7,15 +7,19 @@ namespace SomeImageSlideshow {
 	public static class MAIN {
 		public static int Main (string[] args) {
 			Application.Init ();
+			List<string> imgpaths = new List<string> ();
 			List<string> evalDirs = new List<string> ();
 			bool recurse = false;
 			int time = 0;
+			bool loadfiledir = true;
 			foreach(string arg in args) {
 				if (arg[0] == '-') {
 					switch(arg[1]) {
+					case 'r':
 					case 'R':
 						recurse = true;
 						break;
+					case 't':
 					case 'T':
 						try {
 							time = Convert.ToInt32 (arg.Substring (2));
@@ -23,12 +27,29 @@ namespace SomeImageSlideshow {
 							return Error ("The argument to -T was not a numeric value: {0}", arg.Substring(2));
 						}
 						break;
+					case 'l':
+					case 'L':
+						string loadoutpath = arg.Substring (2);
+						if (!File.Exists (loadoutpath)) {
+							return Error ("The loadout could not be found at this directory.");
+						}
+						Loadout ld = new Loadout (loadoutpath);
+						foreach(string file in ld.GetFiles()) {
+							imgpaths.Add (file);
+						}
+						break;
+					case 'n':
+					case 'N':
+						loadfiledir = false;
+						break;
+					case 'h':
+					case 'H':
+						return Usage ();
 					}
 				} else {
 					evalDirs.Add (arg);
 				}
 			}
-			List<string> imgpaths = new List<string> ();
 			int stindex = -909;
 			if (evalDirs.Count == 0) {
 				foreach (string f in Directory.GetFiles(Environment.CurrentDirectory, "*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)) {
@@ -46,8 +67,10 @@ namespace SomeImageSlideshow {
 							}
 						} else {
 							string dirpath = Path.GetDirectoryName (fullpath);
-							foreach (string f in Directory.GetFiles(dirpath)) {
-								imgpaths.Add (f);
+							if (loadfiledir) {
+								foreach (string f in Directory.GetFiles(dirpath)) {
+									imgpaths.Add (f);
+								}
 							}
 							if (stindex == -909) {
 								stindex = imgpaths.IndexOf (fullpath);
@@ -71,7 +94,13 @@ namespace SomeImageSlideshow {
 		}
 
 		private static int Usage () {
-			Console.WriteLine ("The first parameter must be either a path to an image, or a path to a loadout (.sitl) file begging with -L.\nExamples:\nsishow \"/absolute/path/to/image.jpg\"\nsishow \"relative/path/to/image.jpg\"\nsishow -L\"cats.sitl\"");
+			Console.WriteLine ("Options are divided by spaces.");
+			Console.WriteLine ("An option that does not have a switch \"-\" is considered to be a path to an image or directory. You can have as many of these as you want.");
+			Console.WriteLine ("Valid switches:");
+			Console.WriteLine ("-L<file> : Loads the loadout file located at <file>.");
+			Console.WriteLine ("-N : Do not add all files in the same directory for files specified in the arguments. Does not affect loadouts.");
+			Console.WriteLine ("-R : Recurse through subdirectories on all directories specified in the arguments. Does not affect loadouts.");
+			Console.WriteLine ("-T<num> : Activates slideshow mode, automatically picking a new image every <num> seconds.");
 			return -1;
 		}
 

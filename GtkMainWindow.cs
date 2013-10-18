@@ -145,6 +145,7 @@ namespace SomeImageSlideshow {
 				this.image = new Gdk.Pixbuf (this.imagepaths [imgindex]);
 				this.imageIndex = imgindex;
 				this.UpdateImageZooms (true);
+				this.Title = String.Format("SiShow - \"{0}\"", this.imagepaths[imgindex]);
 			} catch {
 				Console.WriteLine ("Image at index {0} failed to load and will be removed from the image list: \"{1}\"", imgindex, imagepaths [imgindex]);
 				this.imagepaths.RemoveAt (imgindex);
